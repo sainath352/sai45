@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Flight Ticket Booking</title>
+  <meta name="description" content="Responsive flight ticket booking form – one way & round trip with validation." />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#0f172a;       /* slate-900 */
+      --panel:#111827;    /* gray-900 */
+      --ink:#e5e7eb;      /* gray-200 */
+      --muted:#9ca3af;    /* gray-400 */
+      --brand:#6366f1;    /* indigo-500 */
+      --accent:#22d3ee;   /* cyan-400 */
+      --stroke:rgba(255,255,255,.12);
+      --glass:rgba(255,255,255,.06);
+      --shadow:0 24px 60px rgba(0,0,0,.35);
+      --radius:18px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
+      background: radial-gradient(900px 600px at 20% 10%, #1f2937 0, transparent 60%),
+                  radial-gradient(700px 500px at 90% 90%, #0b1020 0, transparent 60%),
+                  linear-gradient(160deg,#0b1224,#0f172a);
+      color:var(--ink); display:grid; place-items:center; padding:clamp(12px,3vw,24px);
+    }
+    .wrap{
+      width:min(1100px,96vw); display:grid; gap:18px;
+    }
+    .header{
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+    }
+    .brand{display:flex; gap:12px; align-items:center}
+    .logo{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;
+      background:linear-gradient(135deg,var(--brand),var(--accent)); font-weight:800}
+    .title{font-weight:800;letter-spacing:.3px}
+    .card{
+      background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.02));
+      border:1px solid var(--stroke); border-radius:var(--radius); padding:18px; box-shadow:var(--shadow);
+    }
+
+    /* Form grid */
+    form{display:grid; gap:14px}
+    .row{display:grid; grid-template-columns:repeat(12,1fr); gap:12px}
+    .col-3{grid-column:span 3}
+    .col-4{grid-column:span 4}
+    .col-6{grid-column:span 6}
+    .col-8{grid-column:span 8}
+    .col-12{grid-column:span 12}
+    @media (max-width:860px){
+      .row{grid-template-columns:1fr}
+      .col-3,.col-4,.col-6,.col-8,.col-12{grid-column:span 1}
+    }
+
+    .field{display:grid; gap:8px}
+    .label{font-size:.92rem; color:var(--muted)}
+    .control{display:flex; align-items:center; gap:10px; background:var(--glass); border:1px solid var(--stroke);
+      border-radius:14px; padding:10px 12px}
+    .control input,.control select{flex:1; background:transparent; border:0; outline:none; color:var(--ink); font-size:1rem}
+
+    .swap{
+      position:absolute; inset:auto; right:12px; top:50%; transform:translateY(-50%);
+      background:var(--panel); border:1px solid var(--stroke); border-radius:12px; padding:8px; cursor:pointer;
+    }
+
+    .trip-toggle{display:flex; gap:8px; background:var(--glass); border:1px solid var(--stroke); border-radius:999px; padding:6px}
+    .toggle-btn{padding:8px 14px; border-radius:999px; border:0; cursor:pointer; background:transparent; color:var(--ink)}
+    .toggle-btn[aria-pressed="true"]{background:linear-gradient(135deg,var(--brand),var(--accent));}
+
+    .actions{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+    .btn{appearance:none; border:0; cursor:pointer; padding:12px 18px; border-radius:14px; font-weight:700; color:white;
+      background:linear-gradient(135deg,var(--brand),var(--accent)); box-shadow:0 14px 32px rgba(34,211,238,.25)}
+    .ghost{background:var(--glass); color:var(--ink); border:1px solid var(--stroke); box-shadow:none}
+
+    .tiny{font-size:.9rem; color:var(--muted)}
+    .notice{background:var(--glass); border:1px solid var(--stroke); padding:10px 12px; border-radius:12px; color:#cbd5e1}
+
+    .split{position:relative}
+    .split .swap{z-index:2}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="header">
+      <div class="brand">
+        <div class="logo">✈︎</div>
+        <div>
+          <div class="title">SkyGo Flights</div>
+          <div class="tiny">Book one‑way or round‑trip tickets in seconds</div>
+        </div>
+      </div>
+      <div class="trip-toggle" role="group" aria-label="Trip type">
+        <button class="toggle-btn" id="oneWayBtn" aria-pressed="false">One‑way</button>
+        <button class="toggle-btn" id="roundTripBtn" aria-pressed="true">Round trip</button>
+      </div>
+    </header>
+
+    <section class="card" aria-label="Flight search">
+      <form id="bookingForm" novalidate>
+        <div class="row split">
+          <div class="col-6">
+            <div class="field">
+              <label class="label" for="from">From</label>
+              <div class="control">
+                <input id="from" name="from" list="airports" placeholder="City or airport" autocomplete="off" required />
+              </div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="field">
+              <label class="label" for="to">To</label>
+              <div class="control">
+                <input id="to" name="to" list="airports" placeholder="City or airport" autocomplete="off" required />
+              </div>
+            </div>
+          </div>
+          <button type="button" class="swap" id="swapBtn" aria-label="Swap origin and destination">⇅</button>
+        </div>
+
+        <div class="row">
+          <div class="col-4">
+            <div class="field">
+              <label class="label" for="depart">Depart</label>
+              <div class="control"><input type="date" id="depart" name="depart" required /></div>
+            </div>
+          </div>
+          <div class="col-4" id="returnCol">
+            <div class="field">
+              <label class="label" for="return">Return</label>
+              <div class="control"><input type="date" id="return" name="return" /></div>
+            </div>
+          </div>
+          <div class="col-4">
+            <div class="field">
+              <label class="label" for="passengers">Passengers</label>
+              <div class="control">
+                <select id="passengers" name="passengers" required>
+                  <option value="1">1</option>
+                  <option value="2">2</option>
+                  <option value="3">3</option>
+                  <option value="4">4</option>
+                  <option value="5">5</option>
+                  <option value="6">6</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-6">
+            <div class="field">
+              <label class="label" for="cabin">Cabin class</label>
+              <div class="control">
+                <select id="cabin" name="cabin">
+                  <option>Economy</option>
+                  <option>Premium Economy</option>
+                  <option>Business</option>
+                  <option>First</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="field">
+              <label class="label" for="promo">Promo code (optional)</label>
+              <div class="control">
+                <input id="promo" name="promo" placeholder="SUMMER25" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button type="submit" class="btn">Search flights</button>
+          <button type="reset" class="btn ghost">Clear</button>
+          <span class="tiny" id="msg" role="status" aria-live="polite"></span>
+        </div>
+
+        <datalist id="airports">
+          <option value="Delhi (DEL)"></option>
+          <option value="Mumbai (BOM)"></option>
+          <option value="Bengaluru (BLR)"></option>
+          <option value="Hyderabad (HYD)"></option>
+          <option value="Chennai (MAA)"></option>
+          <option value="Kolkata (CCU)"></option>
+          <option value="Dubai (DXB)"></option>
+          <option value="Singapore (SIN)"></option>
+          <option value="New York (JFK)"></option>
+          <option value="London (LHR)"></option>
+        </datalist>
+      </form>
+    </section>
+
+    <section class="notice">
+      Demo only: This page validates inputs locally and shows a JSON summary. Wire it to your backend or a search API to fetch real results.
+    </section>
+
+    <section class="card" id="results" hidden>
+      <strong>Search payload</strong>
+      <pre id="payload" style="white-space:pre-wrap"></pre>
+    </section>
+  </div>
+
+  <script>
+    const oneWayBtn = document.getElementById('oneWayBtn');
+    const roundTripBtn = document.getElementById('roundTripBtn');
+    const returnCol = document.getElementById('returnCol');
+    const form = document.getElementById('bookingForm');
+    const msg = document.getElementById('msg');
+    const results = document.getElementById('results');
+    const payload = document.getElementById('payload');
+    const depart = document.getElementById('depart');
+    const ret = document.getElementById('return');
+    const swapBtn = document.getElementById('swapBtn');
+    const from = document.getElementById('from');
+    const to = document.getElementById('to');
+
+    // Set min dates: today
+    const today = new Date();
+    const isoToday = today.toISOString().slice(0,10);
+    depart.min = isoToday; ret.min = isoToday;
+
+    // Trip type toggle
+    let isRoundTrip = true;
+    function setTripType(round){
+      isRoundTrip = !!round;
+      oneWayBtn.setAttribute('aria-pressed', (!round).toString());
+      roundTripBtn.setAttribute('aria-pressed', (round).toString());
+      returnCol.style.display = round ? '' : 'none';
+      if(!round){ ret.value = ''; }
+      localStorage.setItem('tripType', round ? 'round' : 'one');
+    }
+    oneWayBtn.addEventListener('click', ()=> setTripType(false));
+    roundTripBtn.addEventListener('click', ()=> setTripType(true));
+
+    // Swap origin/destination
+    swapBtn.addEventListener('click', ()=>{
+      const a = from.value; from.value = to.value; to.value = a;
+    });
+
+    // Persist last search
+    const saved = JSON.parse(localStorage.getItem('lastSearch')||'null');
+    const savedType = localStorage.getItem('tripType');
+    if(savedType){ setTripType(savedType==='round'); }
+    if(saved){
+      from.value = saved.from||''; to.value = saved.to||'';
+      if(saved.depart) depart.value = saved.depart;
+      if(saved.return) ret.value = saved.return;
+      document.getElementById('passengers').value = saved.passengers||'1';
+      document.getElementById('cabin').value = saved.cabin||'Economy';
+      document.getElementById('promo').value = saved.promo||'';
+    }
+
+    // Keep return date >= depart date
+    depart.addEventListener('change', ()=>{
+      ret.min = depart.value || isoToday;
+      if(ret.value && ret.value < depart.value){ ret.value = depart.value; }
+    });
+
+    form.addEventListener('submit', (e)=>{
+      e.preventDefault();
+      msg.textContent = '';
+      const data = Object.fromEntries(new FormData(form));
+
+      // Validation
+      if(!data.from || !data.to){ return (msg.textContent = 'Enter both From and To.'); }
+      if(data.from.trim() === data.to.trim()){
+        return (msg.textContent = 'Origin and destination must be different.');
+      }
+      if(!data.depart){ return (msg.textContent = 'Select a departure date.'); }
+      if(isRoundTrip){
+        if(!data.return){ return (msg.textContent = 'Select a return date.'); }
+        if(data.return < data.depart){ return (msg.textContent = 'Return must be after depart.'); }
+      } else {
+        delete data.return;
+      }
+
+      data.tripType = isRoundTrip ? 'round' : 'one-way';
+      localStorage.setItem('lastSearch', JSON.stringify(data));
+
+      // Demo output
+      results.hidden = false;
+      payload.textContent = JSON.stringify(data, null, 2);
+      msg.textContent = 'Ready! (demo only)';
+    });
+
+    form.addEventListener('reset', ()=>{
+      msg.textContent = 'Cleared';
+      results.hidden = true; payload.textContent = '';
+    });
+  </script>
+</body>
+</html>
